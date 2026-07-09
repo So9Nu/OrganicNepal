@@ -91,7 +91,7 @@ export default function HomePage() {
               <div className="relative">
                 <div className="glass rounded-3xl overflow-hidden shadow-2xl">
                   <img
-                    src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=600&q=80"
+                    src="https://images.pexels.com/photos/7129126/pexels-photo-7129126.jpeg"
                     alt="Fresh organic produce from Nepal"
                     className="w-full h-[480px] object-cover"
                   />
@@ -130,50 +130,89 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── STATS ── */}
-      <section className="py-16 bg-cream-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {stats.map((stat, i) => (
-              <div key={i} className="glass-card rounded-2xl p-6 text-center hover:shadow-card-hover transition-shadow">
-                <div className="text-4xl mb-2">{stat.icon}</div>
-                <div className="text-2xl md:text-3xl font-bold text-primary-700">{stat.value}</div>
-                <div className="text-sm text-forest-600 mt-1">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      
 
-      {/* ── FEATURES ── */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <h2 className="section-title">Why Choose <span className="text-gradient">Organic Nepal?</span></h2>
-            <p className="section-subtitle max-w-2xl mx-auto">
-              We're building a healthier Nepal by connecting conscious consumers with dedicated organic farmers.
-            </p>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feat, i) => (
-              <div key={i} className="p-6 rounded-2xl border border-primary-100 hover:border-primary-300 hover:shadow-card transition-all duration-300 group">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${feat.color} group-hover:scale-110 transition-transform`}>
-                  <feat.icon size={24} />
-                </div>
-                <h3 className="font-bold text-forest-800 mb-2">{feat.title}</h3>
-                <p className="text-sm text-forest-600 leading-relaxed">{feat.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* ── FEATURED PRODUCTS ── */}
+    
+
+     
+
+      {/* ── CATEGORY GRID ── */}
+     <section className="py-20 bg-white">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="text-center mb-12">
+      <h2 className="section-title">
+        Shop by <span className="text-primary-600">Category</span>
+      </h2>
+    </div>
+
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+      {[
+        {
+          image: "src/pages/shop/vegetables.avif",
+          label: "Vegetables",
+          cat: "vegetables",
+          bg: "bg-green-01 hover:bg-green-100",
+          color: "text-green-700",
+        },
+        {
+          image: "src/pages/fruits.jpg",
+          label: "Fruits",
+          cat: "fruits",
+          bg: "bg-red-01 hover:bg-red-100",
+          color: "text-red-700",
+        },
+        {
+          image: "src/pages/milks.jpg",
+          label: "Dairy",
+          cat: "dairy",
+          bg: "bg-blue-01 hover:bg-blue-100",
+          color: "text-blue-700",
+        },
+        {
+          image: "src/pages/grains.jpg",
+          label: "Grains",
+          cat: "grains",
+          bg: "bg-amber-01 hover:bg-amber-100",
+          color: "text-amber-700",
+        },
+        {
+          image: "src/pages/spices.jpg",
+          label: "Spices",
+          cat: "spices",
+          bg: "bg-orange-01 hover:bg-orange-100",
+          color: "text-orange-700",
+        },
+      ].map((c) => (
+        <Link
+          key={c.cat}
+          to={`/shop?category=${c.cat}`}
+          className={`flex flex-col items-center justify-center p-6 rounded-2xl ${c.bg} ${c.color} transition-all duration-200 hover:-translate-y-1 hover:shadow-card group`}
+        >
+          {/* FIXED IMAGE */}
+          <div className="w-full h-32 mb-4 overflow-hidden rounded-xl">
+            <img
+              src={c.image}
+              alt={c.label}
+              className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
+            />
+          </div>
+
+          <span className="font-semibold text-sm text-center">
+            {c.label}
+          </span>
+        </Link>
+      ))}
+    </div>
+  </div>
+</section>
+
+  {/* ── FEATURED PRODUCTS ── */}
       <section className="py-20 bg-cream-50 bg-organic-pattern">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between mb-12">
             <div>
-              <h2 className="section-title">Featured <span className="text-gradient">Products</span></h2>
+              <h2 className="section-title">Featured <span className="text-primary-600">Products</span></h2>
               <p className="section-subtitle">Handpicked organic goodness from our best farms</p>
             </div>
             <Link
@@ -198,34 +237,36 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── CATEGORY GRID ── */}
+
+ {/* ── FEATURES ── */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="section-title">Shop by <span className="text-gradient">Category</span></h2>
+          <div className="text-center mb-14">
+            <h2 className="section-title">Why Choose <span className="text-primary-600">Organic Nepal?</span></h2>
+            <p className="section-subtitle max-w-2xl mx-auto">
+              We're building a healthier Nepal by connecting conscious consumers with dedicated organic farmers.
+            </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {[
-              { icon: '🥦', label: 'Vegetables', cat: 'vegetables', bg: 'bg-green-50 hover:bg-green-100', color: 'text-green-700' },
-              { icon: '🍓', label: 'Fruits', cat: 'fruits', bg: 'bg-red-50 hover:bg-red-100', color: 'text-red-700' },
-              { icon: '🥛', label: 'Dairy', cat: 'dairy', bg: 'bg-blue-50 hover:bg-blue-100', color: 'text-blue-700' },
-              { icon: '🌾', label: 'Grains', cat: 'grains', bg: 'bg-amber-50 hover:bg-amber-100', color: 'text-amber-700' },
-              { icon: '🌶️', label: 'Spices', cat: 'spices', bg: 'bg-orange-50 hover:bg-orange-100', color: 'text-orange-700' },
-            ].map(c => (
-              <Link
-                key={c.cat}
-                to={`/shop?category=${c.cat}`}
-                className={`flex flex-col items-center justify-center p-6 rounded-2xl ${c.bg} ${c.color} transition-all duration-200 hover:-translate-y-1 hover:shadow-card group`}
-              >
-                <span className="text-4xl mb-3 group-hover:scale-110 transition-transform">{c.icon}</span>
-                <span className="font-semibold text-sm">{c.label}</span>
-              </Link>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feat, i) => (
+              <div key={i} className="p-6 rounded-2xl border border-primary-100 hover:border-primary-300 hover:shadow-card transition-all duration-300 group">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${feat.color} group-hover:scale-110 transition-transform`}>
+                  <feat.icon size={24} />
+                </div>
+                <h3 className="font-bold text-forest-800 mb-2">{feat.title}</h3>
+                <p className="text-sm text-forest-600 leading-relaxed">{feat.desc}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── BANNER ── */}
+    
+      
+
+     
+
+  {/* ── BANNER ── */}
       <section className="py-20 bg-hero-pattern">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -259,23 +300,42 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
+{/* ── STATS ── */}
+            <section className="py-16 bg-cream-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {stats.map((stat, i) => (
+              <div key={i} className="glass-card rounded-2xl p-6 text-center hover:shadow-card-hover transition-shadow">
+                <div className="text-4xl mb-2">{stat.icon}</div>
+                <div className="text-2xl md:text-3xl font-bold text-primary-700">{stat.value}</div>
+                <div className="text-sm text-forest-600 mt-1">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
+
+{/* ── TESTIMONIALS ── */}
       <section className="py-20 bg-cream-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="section-title">What Our <span className="text-gradient">Customers Say</span></h2>
+            <h2 className="section-title">What Our <span className="text-primary-600">Customers Say</span></h2>
             <p className="section-subtitle">Real people. Real organic food. Real stories.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {testimonials.map(t => (
               <div key={t.id} className="glass-card rounded-2xl p-6 hover:shadow-card-hover transition-shadow">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-11 h-11 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold">
-                    {t.avatar}
+                  <div className="w-11 h-11 bg-black rounded-full flex items-center justify-center text-white font-bold">
+                    {t.image ? (<img src={t.image} alt={t.name} className="w-full h-full object-cover rounded-full" />) : (
+                      t.name.charAt(0)
+                    )}
                   </div>
                   <div>
                     <p className="font-semibold text-forest-800">{t.name}</p>
-                    <p className="text-xs text-forest-500">📍 {t.location}</p>
+                    <p className="text-xs text-forest-500"> {t.location}</p>
                   </div>
                 </div>
                 <div className="flex gap-0.5 mb-3">
@@ -291,24 +351,38 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── CTA ── */}
-      <section className="py-20 bg-primary-600">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <div className="text-6xl mb-4">🌿</div>
-          <h2 className="text-4xl font-bold text-white mb-4">Ready to Go Organic?</h2>
-          <p className="text-primary-100 text-lg mb-8">
-            Join 12,000+ Nepalis who've made the switch. Get 15% off your first order with code <strong>ORGANIC15</strong>
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link to="/shop" className="bg-white text-primary-700 font-bold px-8 py-4 rounded-full hover:bg-cream-50 transition-colors text-lg">
-              Start Shopping
-            </Link>
-            <Link to="/signup" className="border-2 border-white text-white font-bold px-8 py-4 rounded-full hover:bg-white/10 transition-colors text-lg">
-              Create Account
-            </Link>
-          </div>
-        </div>
-      </section>
+       {/* ── CTA ── */}
+    <section
+  className="py-20 bg-cover bg-center relative"
+  style={{
+    backgroundImage: "url(https://images.pexels.com/photos/5136449/pexels-photo-5136449.jpeg?w=1600&q=80)",
+  }}
+>
+  {/* Overlay */}
+  <div className="absolute inset-0 bg-primary-700/60"></div>
+
+  <div className="relative max-w-4xl mx-auto px-4 text-center text-white">
+    <h2 className="text-4xl font-bold mb-4">
+      Ready to Go Organic?
+    </h2>
+
+    <p className="text-lg mb-8">
+      Join 12,000+ Nepalis who've made the switch. Get 15% off your first order with code <strong>ORGANIC</strong>
+    </p>
+
+    <div className="flex flex-col sm:flex-row justify-center gap-4">
+      <Link to="/shop" className="bg-white text-primary-700 font-bold px-8 py-4 rounded-full hover:bg-gray-100 transition text-lg">
+        Start Shopping
+      </Link>
+
+      <Link to="/signup" className="border-2 border-white font-bold px-8 py-4 rounded-full hover:bg-white/10 transition text-lg">
+        Create Account
+      </Link>
+    </div>
+  </div>
+</section>
+
+
     </Layout>
   );
 }

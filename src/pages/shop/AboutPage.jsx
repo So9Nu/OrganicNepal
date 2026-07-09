@@ -47,13 +47,13 @@ export default function AboutPage() {
             </div>
             <div className="rounded-3xl overflow-hidden shadow-card">
               <img
-                src="https://images.unsplash.com/photo-1560493676-04071c5f467b?w=600&q=80"
+                src="https://images.pexels.com/photos/30962557/pexels-photo-30962557.jpeg"
                 
                 alt="Nepali farmers in the field"
                 className="w-full h-80 object-cover"
               />
                 <img
-                src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                src="https://images.pexels.com/photos/1517195/pexels-photo-1517195.jpeg"
                 
                 alt="Nepali farmers in the field"
                 className="w-full h-80 object-cover"

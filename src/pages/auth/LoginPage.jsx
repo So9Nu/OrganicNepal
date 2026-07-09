@@ -9,22 +9,21 @@ export default function LoginPage({ adminRoute = false }) {
   const [phone, setPhone] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, loading } = useAuth();
   const navigate = useNavigate();
 
   // ✅ Email Validation
   const validateEmail = (emailValue) => {
     if (!emailValue) return { valid: false, message: '' };
-    if (!emailValue.includes('@')) return { valid: false, message: 'Email must contain @' };
-    if (!emailValue.endsWith('@gmail.com')) return { valid: false, message: 'Only @gmail.com addresses are accepted' };
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailValue)) return { valid: false, message: 'Please enter a valid email address' };
     return { valid: true, message: '' };
   };
 
   // ✅ Password Validation
   const validatePassword = (passwordValue) => {
     const requirements = {
-      length: passwordValue.length >= 8,
+      length: passwordValue.length >= 6,
       uppercase: /[A-Z]/.test(passwordValue),
       lowercase: /[a-z]/.test(passwordValue),
       digit: /[0-9]/.test(passwordValue),
@@ -36,16 +35,14 @@ export default function LoginPage({ adminRoute = false }) {
 
   const emailValidation = validateEmail(email);
   const passwordRequirements = validatePassword(password);
-  const allPasswordsMet = Object.values(passwordRequirements).every(v => v);
-  const isFormValid = emailValidation.valid && allPasswordsMet && (!adminRoute && phone ? true : adminRoute);
+  // Only require minimum length, other requirements are nice-to-have
+  const passwordValid = passwordRequirements.length;
+  const isFormValid = emailValidation.valid && passwordValid && (!adminRoute && phone ? true : adminRoute);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
-    await new Promise(r => setTimeout(r, 600)); // simulate network
-    const result = login(email, password, adminRoute, { phone });
-    setLoading(false);
+    const result = await login(email, password, adminRoute, { phone });
     if (result.success) {
       navigate(result.role === 'admin' ? '/admin' : '/');
     } else {
@@ -57,35 +54,30 @@ export default function LoginPage({ adminRoute = false }) {
     
     <div className="min-h-screen flex">
       {/* Left: Visual Panel */}
-      <div className="hidden lg:flex flex-col justify-between w-1/2 bg-hero-pattern p-12 relative overflow-hidden">
-        <div className="absolute top-20 right-20 w-64 h-64 bg-primary-400/20 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-20 left-20 w-48 h-48 bg-orange-400/15 rounded-full blur-3xl animate-pulse-slow" />
+      <div className="hidden lg:flex flex-col justify-between w-1/2 relative overflow-hidden">
+        <img
+          src="https://images.pexels.com/photos/26772291/pexels-photo-26772291.jpeg"
+          alt="Fresh organic produce"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/40" />
 
-        <Link to="/" className="flex items-center gap-2 relative z-10">
+        <Link to="/" className="flex items-center gap-2 relative z-10 p-12">
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
             <Leaf size={22} className="text-white" />
           </div>
-           <img src="https://unsplash.com/photos/a-man-carrying-a-basket-on-his-head-sf6xU4RKv0M" alt="" />
           <span className="font-bold text-white text-xl">Organic Nepal</span>
-          
         </Link>
 
-        <div className="relative z-10">
+        <div className="relative z-10 p-12">
           <blockquote className="text-white">
             <p className="text-3xl font-bold leading-tight mb-4">
               "Fresh organic food<br />directly from Nepal's<br />finest farms"
             </p>
-            <div className="flex items-center gap-3">
-              <div className=""></div>
-              <div>
-              
-               
-              </div>
-            </div>
           </blockquote>
         </div>
 
-        <div className="flex gap-4 relative z-10">
+        <div className="flex gap-4 relative z-10 p-12">
           {[
             { value: '12K+', label: 'Customers' },
             { value: '350+', label: 'Farms' },
@@ -128,7 +120,7 @@ export default function LoginPage({ adminRoute = false }) {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   className={`input-field pl-11 ${email && (emailValidation.valid ? 'border-green-500 focus:ring-green-500' : 'border-red-500 focus:ring-red-500')}`}
-                  placeholder="you@gmail.com"
+                  placeholder="you@example.com"
                 />
                 {email && (
                   <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
@@ -147,7 +139,7 @@ export default function LoginPage({ adminRoute = false }) {
               )}
               {email && emailValidation.valid && (
                 <p className="mt-1.5 text-sm text-green-600 flex items-center gap-1">
-                  <Check size={14} /> Valid Gmail address
+                  <Check size={14} /> Valid email address
                 </p>
               )}
             </div>
@@ -168,6 +160,7 @@ export default function LoginPage({ adminRoute = false }) {
                 </div>
               </div>
             )}
+            
 
             {/* Password Field */}
             <div>
@@ -178,7 +171,7 @@ export default function LoginPage({ adminRoute = false }) {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className={`input-field pl-11 pr-11 ${password && (allPasswordsMet ? 'border-green-500 focus:ring-green-500' : 'border-red-500 focus:ring-red-500')}`}
+                  className={`input-field pl-11 pr-11 ${password && (passwordValid ? 'border-green-500 focus:ring-green-500' : 'border-red-500 focus:ring-red-500')}`}
                   placeholder="Enter your password"
                 />
                 <button
@@ -195,11 +188,11 @@ export default function LoginPage({ adminRoute = false }) {
             {password && (
   <div className="ml-4 mt-2">
     <p className="text-xs font-semibold text-forest-700 uppercase tracking-wide mb-2">
-      Password requirements
+      Password suggestions (optional)
     </p>
     <ul className="space-y-1">
       {[
-        { key: 'length',    label: 'At least 8 characters',      met: passwordRequirements.length },
+        { key: 'length',    label: 'At least 6 characters (REQUIRED)',      met: passwordRequirements.length },
         { key: 'uppercase', label: 'Uppercase letter (A–Z)',      met: passwordRequirements.uppercase },
         { key: 'lowercase', label: 'Lowercase letter (a–z)',      met: passwordRequirements.lowercase },
         { key: 'digit',     label: 'Digit (0–9)',                 met: passwordRequirements.digit },

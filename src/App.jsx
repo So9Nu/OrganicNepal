@@ -22,8 +22,7 @@ import AdminSettings from './pages/admin/AdminSettings';
 // Protected route for admin
 function AdminRoute({ children }) {
   const { user, isAdmin } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
-  if (!isAdmin) return <Navigate to="/" replace />;
+  if (!user || !isAdmin) return <Navigate to="/login/admin" replace />;
   return children;
 }
 

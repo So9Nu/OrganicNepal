@@ -67,11 +67,11 @@ export default function Footer() {
             <h3 className="font-bold text-white mb-5">Categories</h3>
             <ul className="space-y-3">
               {[
-                { label: '🥦 Vegetables', to: '/shop?category=vegetables' },
-                { label: '🍓 Fruits', to: '/shop?category=fruits' },
-                { label: '🥛 Dairy', to: '/shop?category=dairy' },
-                { label: '🌾 Grains', to: '/shop?category=grains' },
-                { label: '🌶️ Spices', to: '/shop?category=spices' },
+                { label: ' Vegetables', to: '/shop?category=vegetables' },
+                { label: ' Fruits', to: '/shop?category=fruits' },
+                { label: ' Dairy', to: '/shop?category=dairy' },
+                { label: ' Grains', to: '/shop?category=grains' },
+                { label: ' Spices', to: '/shop?category=spices' },
               ].map(cat => (
                 <li key={cat.label}>
                   <Link
@@ -130,7 +130,7 @@ export default function Footer() {
         {/* Bottom */}
         <div className="border-t border-forest-800 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-forest-400 text-sm">
-            © 2024 Organic Nepal. All rights reserved.
+            © 2025 Organic Nepal. All rights reserved to BCA 5th Semester Project .
           </p>
           <div className="flex gap-6">
             {['Privacy Policy', 'Terms of Service', 'Shipping Policy'].map(item => (

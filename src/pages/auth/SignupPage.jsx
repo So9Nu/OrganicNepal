@@ -41,26 +41,35 @@ export default function SignupPage() {
     }
     setLoading(true);
     await new Promise(r => setTimeout(r, 600));
-    const result = signup(form.name, form.email, form.password);
+    const result = await signup(form.email, form.password, '', '', form.phone, form.name);
     setLoading(false);
-    if (result.success) navigate('/');
+    if (result.success) {
+      setError('');
+      navigate('/auth/login');
+    } else {
+      setError(result.error || 'Signup failed');
+    }
   };
 
   return (
     <div className="min-h-screen flex">
       {/* Left Panel */}
-      <div className="hidden lg:flex flex-col justify-between w-1/2 bg-hero-pattern p-12 relative overflow-hidden">
-        <div className="absolute top-20 right-20 w-64 h-64 bg-primary-400/20 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-20 left-20 w-48 h-48 bg-orange-400/15 rounded-full blur-3xl animate-pulse-slow" />
+      <div className="hidden lg:flex flex-col justify-between w-1/2 relative overflow-hidden">
+        <img
+          src="https://images.pexels.com/photos/36517204/pexels-photo-36517204.jpeg"
+          alt="Fresh organic produce"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/40" />
 
-        <Link to="/" className="flex items-center gap-2 relative z-10">
+        <Link to="/" className="flex items-center gap-2 relative z-10 p-12">
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
             <Leaf size={22} className="text-white" />
           </div>
           <span className="font-bold text-white text-xl">Organic Nepal</span>
         </Link>
 
-        <div className="relative z-10">
+        <div className="relative z-10 p-12">
           <h2 className="text-4xl font-bold text-white leading-tight mb-6">
             Join 12,000+<br />health-conscious<br />Nepalis 🌿
           </h2>
@@ -75,8 +84,6 @@ export default function SignupPage() {
             ))}
           </ul>
         </div>
-
-       
       </div>
 
       {/* Right: Form */}
