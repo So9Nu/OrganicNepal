@@ -1,34 +1,64 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ShoppingCart, ArrowLeft, Star, Truck, Shield, Leaf, Plus, Minus, Heart, Share2, MapPin } from 'lucide-react';
-import { products } from '../../data/mockData';
 import { useCart } from '../../context/CartContext';
-import ProductCard from '../../components/shop/ProductCard';
 import Layout from '../../components/layout/Layout';
+import ProductCard from '../../components/shop/ProductCard';
+
+const PRODUCTS_API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5008/api'}/products`;
+const asBoolean = (value) => value === true || value === 1 || value === '1' || value === 'true';
+const normalizeProduct = (product) => ({
+  ...product,
+  price: Number(product.price), originalPrice: product.originalPrice == null ? null : Number(product.originalPrice),
+  rating: Number(product.rating) || 0, reviews: Number(product.reviews) || 0,
+  inStock: asBoolean(product.inStock), featured: asBoolean(product.featured),
+  badges: product.badges || [product.featured && 'organic', product.inStock && 'fresh'].filter(Boolean),
+  nepali: product.nepali || '', description: product.description || '',
+});
 
 export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addItem } = useCart();
+  const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [related, setRelated] = useState([]);
 
-  const product = products.find(p => p.id === Number(id));
-  const related = products.filter(p => p.category === product?.category && p.id !== product?.id).slice(0, 3);
+  useEffect(() => {
+    const fetchProduct = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`${PRODUCTS_API_URL}/${encodeURIComponent(id)}`);
+        const data = await response.json();
 
-  if (!product) {
-    return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-6xl mb-4">😕</div>
-            <h2 className="text-2xl font-bold text-forest-800 mb-4">Product Not Found</h2>
-            <Link to="/shop" className="btn-primary">Back to Shop</Link>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+        if (!response.ok) throw new Error(data.message || 'Failed to fetch product');
+
+        const apiProduct = data.product || data;
+        if (!apiProduct || typeof apiProduct !== 'object') throw new Error('The products API returned an invalid response');
+        const normalized = normalizeProduct(apiProduct);
+        setProduct(normalized);
+        const relatedResponse = await fetch(`${PRODUCTS_API_URL}?category=${encodeURIComponent(normalized.category)}`);
+        if (relatedResponse.ok) {
+          const relatedData = await relatedResponse.json();
+          const relatedProducts = Array.isArray(relatedData) ? relatedData : relatedData.products;
+          setRelated(Array.isArray(relatedProducts) ? relatedProducts.map(normalizeProduct).filter(item => item.id !== normalized.id).slice(0, 3) : []);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  if (loading) return <Layout><p>Loading product...</p></Layout>;
+  if (error) return <Layout><p>Error: {error}</p></Layout>;
+  if (!product) return <Layout><p>Product not found.</p></Layout>;
 
   const discount = product.originalPrice > product.price
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)

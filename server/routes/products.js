@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
+const { verifyAdmin } = require('../middleware/auth');
 
 // Get all products
 router.get('/', (req, res) => {
@@ -51,10 +52,10 @@ router.get('/:id', (req, res) => {
 });
 
 // Create product (Admin)
-router.post('/', (req, res) => {
+router.post('/', verifyAdmin, (req, res) => {
   const { name, nepali, category, price, originalPrice, unit, description, farm, location, image, inStock, featured } = req.body;
 
-  if (!name || !category || !price) {
+  if (!name || !category || !Number.isFinite(Number(price)) || Number(price) < 0) {
     return res.status(400).json({ message: 'Name, category, and price are required' });
   }
 
@@ -86,9 +87,23 @@ router.post('/', (req, res) => {
 });
 
 // Update product (Admin)
-router.put('/:id', (req, res) => {
+router.put('/:id', verifyAdmin, (req, res) => {
   const productId = req.params.id;
-  const updates = req.body;
+  const allowedFields = ['name', 'nepali', 'category', 'price', 'originalPrice', 'unit', 'description', 'farm', 'location', 'image', 'inStock', 'featured'];
+  const updates = Object.fromEntries(
+    allowedFields
+      .filter(field => Object.prototype.hasOwnProperty.call(req.body, field))
+      .map(field => [field, req.body[field]])
+  );
+
+  if (!Object.keys(updates).length) {
+    return res.status(400).json({ message: 'No valid product fields were provided' });
+  }
+  if ((updates.name !== undefined && !String(updates.name).trim()) ||
+      (updates.category !== undefined && !String(updates.category).trim()) ||
+      (updates.price !== undefined && (!Number.isFinite(Number(updates.price)) || Number(updates.price) < 0))) {
+    return res.status(400).json({ message: 'Name, category, and a valid price are required' });
+  }
 
   db.query('UPDATE products SET ? WHERE id = ?', [updates, productId], (error, results) => {
     if (error) {
@@ -104,7 +119,7 @@ router.put('/:id', (req, res) => {
 });
 
 // Delete product (Admin)
-router.delete('/:id', (req, res) => {
+router.delete('/:id', verifyAdmin, (req, res) => {
   const productId = req.params.id;
 
   db.query('DELETE FROM products WHERE id = ?', [productId], (error, results) => {

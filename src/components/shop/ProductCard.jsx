@@ -61,7 +61,7 @@ export default function ProductCard({ product }) {
       <div className="p-4">
         {/* Badges */}
         <div className="flex flex-wrap gap-1.5 mb-2">
-          {product.badges.slice(0, 2).map(badge => (
+          {(product.badges || []).slice(0, 2).map(badge => (
             <span key={badge} className={BADGE_STYLES[badge]}>
               {badge === 'organic' && '🌿 '}
               {badge === 'fresh' && '✨ '}

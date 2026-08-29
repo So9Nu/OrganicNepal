@@ -1,67 +1,58 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
+const { verifyAdmin, verifyToken } = require('../middleware/auth');
 
-// Get all users (Admin)
-router.get('/', (req, res) => {
-  db.query('SELECT id, email, firstName, lastName, phone, createdAt FROM users ORDER BY createdAt DESC', (error, results) => {
-    if (error) {
-      return res.status(500).json({ message: 'Database error', error });
-    }
-    return res.status(200).json(results);
-  });
+router.get('/', verifyAdmin, async (req, res) => {
+  try {
+    const [users] = await db.promise().query('SELECT id, name, email, phone, role, createdAt FROM users ORDER BY createdAt DESC');
+    return res.json(users);
+  } catch (error) {
+    console.error('Get users error:', error);
+    return res.status(500).json({ message: 'Database error' });
+  }
 });
 
-// Get user by ID
-router.get('/:id', (req, res) => {
-  const userId = req.params.id;
-
-  db.query('SELECT id, email, firstName, lastName, phone, createdAt FROM users WHERE id = ?', [userId], (error, results) => {
-    if (error) {
-      return res.status(500).json({ message: 'Database error', error });
-    }
-
-    if (results.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    return res.status(200).json(results[0]);
-  });
+router.get('/:id', verifyToken, async (req, res) => {
+  const userId = Number(req.params.id);
+  if (!Number.isInteger(userId) || (req.userId !== userId && req.userRole !== 'admin')) return res.status(403).json({ message: 'Access denied' });
+  try {
+    const [users] = await db.promise().query('SELECT id, name, email, phone, role, createdAt FROM users WHERE id = ?', [userId]);
+    if (!users.length) return res.status(404).json({ message: 'User not found' });
+    return res.json(users[0]);
+  } catch (error) {
+    console.error('Get user error:', error);
+    return res.status(500).json({ message: 'Database error' });
+  }
 });
 
-// Update user profile
-router.put('/:id', (req, res) => {
-  const userId = req.params.id;
-  const { firstName, lastName, phone } = req.body;
-
-  db.query('UPDATE users SET firstName = ?, lastName = ?, phone = ? WHERE id = ?', [firstName, lastName, phone, userId], (error, results) => {
-    if (error) {
-      return res.status(500).json({ message: 'Database error', error });
-    }
-
-    if (results.affectedRows === 0) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    return res.status(200).json({ message: 'User updated successfully' });
-  });
+router.put('/:id', verifyToken, async (req, res) => {
+  const userId = Number(req.params.id);
+  const { name, phone } = req.body;
+  if (!Number.isInteger(userId) || req.userId !== userId) return res.status(403).json({ message: 'Access denied' });
+  if (!name || !name.trim()) return res.status(400).json({ message: 'Name is required' });
+  try {
+    const [result] = await db.promise().query('UPDATE users SET name = ?, phone = ? WHERE id = ?', [name.trim(), phone?.trim() || null, userId]);
+    if (!result.affectedRows) return res.status(404).json({ message: 'User not found' });
+    const [users] = await db.promise().query('SELECT id, name, email, phone, role FROM users WHERE id = ?', [userId]);
+    return res.json({ message: 'User updated successfully', user: users[0] });
+  } catch (error) {
+    console.error('Update user error:', error);
+    return res.status(500).json({ message: 'Database error' });
+  }
 });
 
-// Delete user (Admin)
-router.delete('/:id', (req, res) => {
-  const userId = req.params.id;
-
-  db.query('DELETE FROM users WHERE id = ?', [userId], (error, results) => {
-    if (error) {
-      return res.status(500).json({ message: 'Database error', error });
-    }
-
-    if (results.affectedRows === 0) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    return res.status(200).json({ message: 'User deleted successfully' });
-  });
+router.delete('/:id', verifyAdmin, async (req, res) => {
+  const userId = Number(req.params.id);
+  if (!Number.isInteger(userId) || userId === req.userId) return res.status(400).json({ message: 'Invalid user deletion request' });
+  try {
+    const [result] = await db.promise().query('DELETE FROM users WHERE id = ?', [userId]);
+    if (!result.affectedRows) return res.status(404).json({ message: 'User not found' });
+    return res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    return res.status(500).json({ message: 'Database error' });
+  }
 });
 
 module.exports = router;

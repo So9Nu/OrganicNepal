@@ -5,12 +5,15 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import Layout from '../../components/layout/Layout';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5008/api';
+
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderId, setOrderId] = useState(null);
   const [form, setForm] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -27,53 +30,37 @@ export default function CheckoutPage() {
 
   const handleChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handlePlaceOrder = (e) => {
+  const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    
-    // ✅ Save order to localStorage
-    const orderId = `ORD-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-    const newOrder = {
-      id: orderId,
-      date: new Date().toISOString().split('T')[0],
-      items: items.map(item => ({
-        id: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-      })),
-      total: total,
-      status: 'Processing',
-      deliveryInfo: {
-        name: form.name,
-        phone: form.phone,
-        email: form.email,
-        address: form.address,
-        city: form.city,
-        notes: form.notes,
-      },
-      paymentMethod: form.payment,
-    };
+    try {
+      const response = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+        body: JSON.stringify({
+          items: items.map(item => ({
+            id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+          shippingAddress: `${form.name}, ${form.phone}, ${form.address}, ${form.city}, ${form.district}${form.notes ? ` — ${form.notes}` : ''}`,
+          paymentMethod: form.payment,
+        }),
+      });
+      const data = await response.json();
 
-    // Store order per user ID
-    if (user) {
-      const userId = user.id || user.phone || user.phoneNumber;
-      const existingOrders = JSON.parse(localStorage.getItem(`orders_${userId}`) || '[]');
-      existingOrders.push(newOrder);
-      localStorage.setItem(`orders_${userId}`, JSON.stringify(existingOrders));
-    }
+      if (!response.ok) throw new Error(data.message || 'Failed to place order');
 
-    // Update user profile with latest address
-    if (user) {
-      const userId = user.id || user.phone || user.phoneNumber;
-      localStorage.setItem(`profile_${userId}`, JSON.stringify({
-        name: form.name,
-        phone: form.phone,
-        address: form.address,
-      }));
+      setOrderPlaced(true);
+      setOrderId(data.orderId);
+      clearCart();
+    } catch (error) {
+      console.error('Order placement error:', error);
+      alert('Failed to place order. Please try again.');
     }
-    
-    setOrderPlaced(true);
-    clearCart();
   };
 
   if (items.length === 0 && !orderPlaced) {
@@ -104,7 +91,7 @@ export default function CheckoutPage() {
             <div className="glass-card rounded-2xl p-5 mb-6 text-left">
               <div className="flex justify-between text-sm mb-2">
                 <span className="text-forest-600">Order ID</span>
-                <span className="font-bold text-forest-800">#ORG-{Math.random().toString(36).slice(2, 8).toUpperCase()}</span>
+                <span className="font-bold text-forest-800">#ORG-{orderId}</span>
               </div>
               <div className="flex justify-between text-sm mb-2">
                 <span className="text-forest-600">Amount Paid</span>

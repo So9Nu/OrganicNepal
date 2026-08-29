@@ -1,14 +1,13 @@
 -- Create Database
-CREATE DATABASE IF NOT EXISTS organic_grocery;
-USE organic_grocery;
+CREATE DATABASE IF NOT EXISTS sonu;
+USE sonu;
 
 -- Users Table
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(255) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
-  firstName VARCHAR(100),
-  lastName VARCHAR(100),
+  name VARCHAR(100),
   phone VARCHAR(20),
   role ENUM('user', 'admin') DEFAULT 'user',
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -18,16 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- Products Table
 CREATE TABLE IF NOT EXISTS products (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,  const db = mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'organic_grocery',
-    // Uses MySQL default port 3306 ✅
-  });  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
+  name VARCHAR(255) NOT NULL,
   nepali VARCHAR(255),
   category VARCHAR(100) NOT NULL,
   price DECIMAL(10, 2) NOT NULL,
@@ -86,5 +76,5 @@ INSERT INTO products (name, nepali, category, price, originalPrice, unit, descri
 ('Fresh Broccoli', 'ताजा ब्रोकाउली', 'vegetables', 120, 150, '500g', 'Fresh and crunchy broccoli packed with nutrients from organic farms.', 'Valley Greens', 'Kathmandu', true, false, 4.5, 67);
 
 -- Create admin user (password: admin123 - hashed with bcrypt)
-INSERT INTO users (email, password, firstName, lastName, phone, role) VALUES
-('admin@organic.com', '$2b$10$YOvZvNQvzVK8K5YZ5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z', 'Admin', 'User', '9800000000', 'admin');
+INSERT IGNORE INTO users (email, password, name, phone, role) VALUES
+('admin@organic.com', '$2b$10$EZ7HLWbVp3Zzn4BMnQyC.ehgjxVsLodjF.LGYoIdW9fUrpVGqPhmq', 'Admin User', '9800000000', 'admin');

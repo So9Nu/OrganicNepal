@@ -55,7 +55,7 @@ Production mode:
 npm start
 ```
 
-Server will run on `http://localhost:5000`
+Server will run on `http://localhost:5008` by default.
 
 ## API Endpoints
 
@@ -87,20 +87,19 @@ Server will run on `http://localhost:5000`
 
 ### Register
 ```bash
-curl -X POST http://localhost:5000/api/auth/register \
+curl -X POST http://localhost:5008/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
     "password": "password123",
-    "firstName": "John",
-    "lastName": "Doe",
+    "name": "John Doe",
     "phone": "9800000000"
   }'
 ```
 
 ### Login
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST http://localhost:5008/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -110,20 +109,20 @@ curl -X POST http://localhost:5000/api/auth/login \
 
 ### Get All Products
 ```bash
-curl http://localhost:5000/api/products
+curl http://localhost:5008/api/products
 ```
 
 ### Get Products by Category
 ```bash
-curl "http://localhost:5000/api/products?category=vegetables"
+curl "http://localhost:5008/api/products?category=vegetables"
 ```
 
 ### Create Order
 ```bash
-curl -X POST http://localhost:5000/api/orders \
+curl -X POST http://localhost:5008/api/orders \
+  -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
-    "userId": 1,
     "items": [
       {
         "id": 1,
@@ -131,7 +130,6 @@ curl -X POST http://localhost:5000/api/orders \
         "price": 80
       }
     ],
-    "totalAmount": 160,
     "shippingAddress": "123 Main St",
     "paymentMethod": "card"
   }'
@@ -144,7 +142,7 @@ curl -X POST http://localhost:5000/api/orders \
 ## Database Schema
 
 ### Users Table
-- id, email, password, firstName, lastName, phone, role, createdAt, updatedAt
+- id, email, password, name, phone, role, createdAt, updatedAt
 
 ### Products Table
 - id, name, nepali, category, price, originalPrice, unit, description, farm, location, image, inStock, featured, rating, reviews, createdAt, updatedAt
@@ -160,11 +158,11 @@ curl -X POST http://localhost:5000/api/orders \
 ### Database Connection Error
 - Verify MySQL is running: `mysql -u root -p -e "SELECT 1"`
 - Check `.env` credentials match your MySQL setup
-- Ensure database `organic_grocery` exists
+- Ensure database `sonu` exists, or set `DB_NAME` in `.env`
 
 ### Port Already in Use
 - Change PORT in `.env` file
-- Or find and kill process: `lsof -ti:5000 | xargs kill -9`
+- Or find and stop the process using port 5008
 
 ### Dependencies Issue
 - Delete `node_modules` and `package-lock.json`

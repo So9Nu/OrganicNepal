@@ -47,7 +47,7 @@ export default function Footer() {
                 { label: 'Home', to: '/' },
                 { label: 'Shop', to: '/shop' },
                 { label: 'About Us', to: '/about' },
-                { label: 'Our Farms', to: '/about' },
+                { label: 'Our Farms', to: '/farms' },
                 { label: 'Contact', to: '/contact' },
               ].map(link => (
                 <li key={link.to}>
@@ -91,7 +91,7 @@ export default function Footer() {
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <MapPin size={16} className="text-primary-400 mt-0.5 flex-shrink-0" />
-                <span className="text-forest-300 text-sm">Thamel, Kathmandu<br />Nepal, 44600</span>
+                <span className="text-forest-300 text-sm">Balkhu, Kathmandu<br />Nepal, 44600</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={16} className="text-primary-400 flex-shrink-0" />

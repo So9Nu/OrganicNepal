@@ -1,9 +1,25 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
-import { products, categories } from '../../data/mockData';
 import ProductCard from '../../components/shop/ProductCard';
 import Layout from '../../components/layout/Layout';
+
+const PRODUCTS_API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5008/api'}/products`;
+
+const asBoolean = (value) => value === true || value === 1 || value === '1' || value === 'true';
+
+const normalizeProduct = (product) => ({
+  ...product,
+  price: Number(product.price),
+  originalPrice: product.originalPrice == null ? null : Number(product.originalPrice),
+  rating: Number(product.rating) || 0,
+  reviews: Number(product.reviews) || 0,
+  inStock: asBoolean(product.inStock),
+  featured: asBoolean(product.featured),
+  badges: product.badges || [product.featured && 'organic', product.inStock && 'fresh'].filter(Boolean),
+  nepali: product.nepali || '',
+  description: product.description || '',
+});
 
 const SORT_OPTIONS = [
   { value: 'featured', label: 'Featured' },
@@ -14,7 +30,10 @@ const SORT_OPTIONS = [
 ];
 
 export default function ShopPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeCategory, setActiveCategory] = useState(searchParams.get('category') || 'all');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [sortBy, setSortBy] = useState('featured');
@@ -22,6 +41,22 @@ export default function ShopPage() {
   const [priceRange, setPriceRange] = useState([0, 1000]);
   const [showOnlyInStock, setShowOnlyInStock] = useState(false);
   const [selectedBadges, setSelectedBadges] = useState([]);
+
+  const categories = useMemo(() => {
+    const counts = products.reduce((result, product) => {
+      if (product.category) result[product.category] = (result[product.category] || 0) + 1;
+      return result;
+    }, {});
+    return [
+      { id: 'all', name: 'All Products', icon: '🌿', count: products.length },
+      ...Object.entries(counts).map(([id, count]) => ({
+        id,
+        name: id.charAt(0).toUpperCase() + id.slice(1),
+        icon: '🛒',
+        count,
+      })),
+    ];
+  }, [products]);
 
   // Sync URL params
   useEffect(() => {
@@ -77,7 +112,37 @@ export default function ShopPage() {
     }
 
     return result;
-  }, [activeCategory, searchQuery, sortBy, priceRange, showOnlyInStock, selectedBadges]);
+  }, [products, activeCategory, searchQuery, sortBy, priceRange, showOnlyInStock, selectedBadges]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const category = searchParams.get('category');
+        const search = searchParams.get('search');
+        const query = new URLSearchParams();
+        if (category) query.append('category', category);
+        if (search) query.append('search', search);
+
+        const response = await fetch(`${PRODUCTS_API_URL}?${query.toString()}`);
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.message || 'Failed to fetch products');
+        const apiProducts = Array.isArray(data) ? data : data.products;
+        if (!Array.isArray(apiProducts)) throw new Error('The products API returned an invalid response');
+        setProducts(apiProducts.map(normalizeProduct));
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [searchParams]);
+
+  if (loading) return <Layout><p>Loading products...</p></Layout>;
+  if (error) return <Layout><p>Error: {error}</p></Layout>;
 
   return (
     <Layout>

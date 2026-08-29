@@ -1,31 +1,36 @@
 const mysql = require('mysql2');
-require('dotenv').config();
+const path = require('path');
+const dotenv = require('dotenv');
 
-const db = mysql.createConnection({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'organic_grocery',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
+dotenv.config({
+    path: path.resolve(__dirname, '../.env'),
 });
 
-db.connect((error) => {
-  if (error) {
-    if (error.code === 'PROTOCOL_CONNECTION_LOST') {
-      console.error('Database connection was closed.');
-    }
-    if (error.code === 'ER_CON_COUNT_ERROR') {
-      console.error('Database has too many connections.');
-    }
-    if (error.code === 'ER_ACCESS_DENIED_ERROR') {
-      console.error('Database access was denied.');
-    }
-    return;
-  }
+const db = mysql.createPool({
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME ,
+    port: Number(process.env.DB_PORT),
 
-  console.log('MySQL is connected successfully.');
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+});
+
+// Test database connection
+db.getConnection((err, connection) => {
+    if (err) {
+        console.error('❌ MySQL connection failed');
+        console.error('Code:', err.code);
+        console.error('Message:', err.message);
+        return;
+    }
+
+    console.log('✅ MySQL connected');
+    console.log('Database:', process.env.DB_NAME );
+
+    connection.release();
 });
 
 module.exports = db;

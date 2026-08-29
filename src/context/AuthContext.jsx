@@ -1,115 +1,316 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import {
+    createContext,
+    useContext,
+    useEffect,
+    useState,
+} from 'react';
 
-const AuthContext = createContext();
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const AuthContext = createContext(null);
+
+const API_URL =
+    import.meta.env.VITE_API_URL ||
+    'http://localhost:5008/api';
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('authToken') || null);
-  const [loading, setLoading] = useState(false);
+    // --------------------------------------------------
+    // User
+    // --------------------------------------------------
+    const [user, setUser] = useState(() => {
+        try {
+            const savedUser = localStorage.getItem('authUser');
 
-  // Check if token is still valid on mount
-  useEffect(() => {
-    if (token) {
-      // Optionally verify token with backend
-      try {
-        const decoded = JSON.parse(atob(token.split('.')[1]));
-        if (decoded.exp * 1000 > Date.now()) {
-          setUser(decoded.user);
-        } else {
-          localStorage.removeItem('authToken');
-          setToken(null);
+            return savedUser
+                ? JSON.parse(savedUser)
+                : null;
+        } catch (error) {
+            console.error(
+                'Failed to restore user:',
+                error
+            );
+
+            localStorage.removeItem('authUser');
+
+            return null;
         }
-      } catch (e) {
-        localStorage.removeItem('authToken');
+    });
+
+    // --------------------------------------------------
+    // JWT Token
+    // --------------------------------------------------
+    const [token, setToken] = useState(
+        () => localStorage.getItem('authToken') || null
+    );
+
+    // --------------------------------------------------
+    // Loading
+    // --------------------------------------------------
+    const [loading, setLoading] = useState(true);
+
+    // --------------------------------------------------
+    // Restore authentication on app startup
+    // --------------------------------------------------
+    useEffect(() => {
+        const restoreAuth = () => {
+            const savedToken =
+                localStorage.getItem('authToken');
+
+            const savedUser =
+                localStorage.getItem('authUser');
+
+            // No saved authentication
+            if (!savedToken) {
+                setToken(null);
+                setUser(null);
+                setLoading(false);
+                return;
+            }
+
+            try {
+                // Decode JWT payload
+                const payload = JSON.parse(
+                    atob(savedToken.split('.')[1])
+                );
+
+                // Check token expiration
+                if (
+                    payload.exp &&
+                    payload.exp * 1000 <= Date.now()
+                ) {
+                    console.log('JWT token expired');
+
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('authUser');
+
+                    setToken(null);
+                    setUser(null);
+
+                    return;
+                }
+
+                // Restore token
+                setToken(savedToken);
+
+                // Restore saved user
+                if (savedUser) {
+                    setUser(JSON.parse(savedUser));
+                } else {
+                    // Fallback: create user from JWT
+                    const restoredUser = {
+                        id: payload.id,
+                        email: payload.email,
+                        name:
+                            payload.name ||
+                            payload.email?.split('@')[0],
+                        role: payload.role || 'user',
+                    };
+
+                    setUser(restoredUser);
+
+                    localStorage.setItem(
+                        'authUser',
+                        JSON.stringify(restoredUser)
+                    );
+                }
+            } catch (error) {
+                console.error(
+                    'Invalid authentication token:',
+                    error
+                );
+
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('authUser');
+
+                setToken(null);
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        restoreAuth();
+    }, []);
+
+    // --------------------------------------------------
+    // LOGIN
+    // --------------------------------------------------
+    // LoginPage sends:
+    //
+    // login(token, user)
+    //
+    // Backend returns:
+    //
+    // {
+    //   message: "Login successful",
+    //   token: "...",
+    //   user: {...}
+    // }
+    // --------------------------------------------------
+    const login = (newToken, newUser) => {
+        if (!newToken || !newUser) {
+            throw new Error(
+                'Invalid login response'
+            );
+        }
+
+        console.log(
+            'User logged in:',
+            newUser
+        );
+
+        // Update React state
+        setToken(newToken);
+        setUser(newUser);
+
+        // Persist authentication
+        localStorage.setItem(
+            'authToken',
+            newToken
+        );
+
+        localStorage.setItem(
+            'authUser',
+            JSON.stringify(newUser)
+        );
+    };
+
+    // --------------------------------------------------
+    // REGISTER
+    // --------------------------------------------------
+    const register = async (
+        name,
+        email,
+        password,
+        phone
+    ) => {
+        setLoading(true);
+
+        try {
+            const response = await fetch(
+                `${API_URL}/auth/register`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: name.trim(),
+                        email: email.trim().toLowerCase(),
+                        password,
+                        phone: phone?.trim() || null,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    'Registration failed'
+                );
+            }
+
+            console.log(
+                'Registration successful:',
+                data
+            );
+
+            return data;
+        } catch (error) {
+            console.error(
+                'Registration error:',
+                error
+            );
+
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --------------------------------------------------
+    // LOGOUT
+    // --------------------------------------------------
+    const logout = () => {
+        console.log('User logged out');
+
+        // Clear browser storage
+        localStorage.removeItem(
+            'authToken'
+        );
+
+        localStorage.removeItem(
+            'authUser'
+        );
+
+        // Clear React state
         setToken(null);
-      }
-    }
-  }, [token]);
+        setUser(null);
+    };
 
-  const login = async (email, password, isAdmin = false, userData = {}) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+    // --------------------------------------------------
+    // UPDATE USER
+    // --------------------------------------------------
+    const updateUser = (updatedUser) => {
+        if (!updatedUser) return;
 
-      const data = await response.json();
+        setUser(updatedUser);
 
-      if (!response.ok) {
-        return { success: false, error: data.message || 'Login failed' };
-      }
+        localStorage.setItem(
+            'authUser',
+            JSON.stringify(updatedUser)
+        );
+    };
 
-      // Store token and user
-      localStorage.setItem('authToken', data.token);
-      setToken(data.token);
-      setUser(data.user);
+    // --------------------------------------------------
+    // Admin
+    // --------------------------------------------------
+    const isAdmin =
+        user?.role === 'admin';
 
-      return {
-        success: true,
-        role: data.user.role || 'user',
-        user: data.user,
-      };
-    } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, error: 'Network error. Please try again.' };
-    } finally {
-      setLoading(false);
-    }
-  };
+    // --------------------------------------------------
+    // Authentication
+    // --------------------------------------------------
+    const isAuthenticated =
+        !!user && !!token;
 
-  const signup = async (email, password, firstName, lastName, phone, name) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, firstName, lastName, phone, name }),
-      });
+    // --------------------------------------------------
+    // Context
+    // --------------------------------------------------
+    return (
+        <AuthContext.Provider
+            value={{
+                user,
+                token,
 
-      const data = await response.json();
+                login,
+                logout,
+                register,
+                updateUser,
 
-      if (!response.ok) {
-        return { success: false, error: data.message || 'Registration failed' };
-      }
+                isAdmin,
+                isAuthenticated,
 
-      return { success: true, message: 'Registration successful. Please login.' };
-    } catch (error) {
-      console.error('Signup error:', error);
-      return { success: false, error: 'Network error. Please try again.' };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = () => {
-    localStorage.removeItem('authToken');
-    setToken(null);
-    setUser(null);
-  };
-
-  const isAdmin = user?.role === 'admin';
-
-  return (
-    <AuthContext.Provider value={{
-      user,
-      token,
-      login,
-      logout,
-      signup,
-      isAdmin,
-      loading,
-      isAuthenticated: !!user,
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+                loading,
+            }}
+        >
+            {children}
+        </AuthContext.Provider>
+    );
 }
 
+// --------------------------------------------------
+// useAuth Hook
+// --------------------------------------------------
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
-  return ctx;
+    const context =
+        useContext(AuthContext);
+
+    if (!context) {
+        throw new Error(
+            'useAuth must be used inside AuthProvider'
+        );
+    }
+
+    return context;
 }

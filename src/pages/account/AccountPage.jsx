@@ -4,8 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import { User, Phone, MapPin, Package, LogOut, Edit2, Save, X } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5008/api';
+
 export default function AccountPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
 
@@ -19,24 +21,25 @@ export default function AccountPage() {
   // ✅ Sync if user context updates after mount
   useEffect(() => {
     if (user) {
+      let savedProfile = {};
+      try { savedProfile = JSON.parse(localStorage.getItem(`profile_${user.id}`) || '{}'); } catch { savedProfile = {}; }
       setFormData({
-        name: user.name || '',
-        phone: user.phone || user.phoneNumber || '',
-        address: user.address || 'Kathmandu, Nepal',
+        name: user.name || savedProfile.name || '',
+        phone: user.phone || user.phoneNumber || savedProfile.phone || '',
+        address: savedProfile.address || user.address || 'Kathmandu, Nepal',
       });
     }
   }, [user]);
 
-  // ✅ Pull orders from localStorage (set during checkout)
   const [orders, setOrders] = useState([]);
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     if (user) {
-      const userId = user.id || user.phone || user.phoneNumber;
-      const stored = localStorage.getItem(`orders_${userId}`);
-      if (stored) {
-        setOrders(JSON.parse(stored));
-      }
+      fetch(`${API_URL}/orders/user/${user.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` } })
+        .then(response => response.ok ? response.json() : Promise.reject(new Error('Unable to load orders')))
+        .then(setOrders)
+        .catch(() => setOrders([]));
     }
   }, [user]);
 
@@ -45,13 +48,22 @@ export default function AccountPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveProfile = () => {
-    // Persist updated address back to localStorage if needed
-    if (user) {
-      const userId = user.id || user.phone || user.phoneNumber;
-      localStorage.setItem(`profile_${userId}`, JSON.stringify(formData));
+  const handleSaveProfile = async () => {
+    setSaveError('');
+    try {
+      const response = await fetch(`${API_URL}/users/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('authToken')}` },
+        body: JSON.stringify({ name: formData.name, phone: formData.phone }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Unable to save profile');
+      updateUser(data.user);
+      localStorage.setItem(`profile_${user.id}`, JSON.stringify(formData));
+      setIsEditingProfile(false);
+    } catch (error) {
+      setSaveError(error.message);
     }
-    setIsEditingProfile(false);
   };
 
   const handleLogout = () => {
@@ -59,7 +71,7 @@ export default function AccountPage() {
     navigate('/');
   };
 
-  const totalSpent = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+  const totalSpent = orders.reduce((sum, order) => sum + Number(order.totalAmount ?? order.total ?? 0), 0);
 
   const statusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -209,6 +221,7 @@ export default function AccountPage() {
                         <X className="w-4 h-4" />
                       </button>
                     </div>
+                    {saveError && <p className="text-sm text-red-600">{saveError}</p>}
                   </div>
                 )}
               </div>
@@ -234,11 +247,11 @@ export default function AccountPage() {
                           </div>
                           <div>
                             <p className="text-sm text-gray-600 mb-1">Order Date</p>
-                            <p className="font-semibold text-gray-900">{order.date}</p>
+                            <p className="font-semibold text-gray-900">{new Date(order.createdAt || order.date).toLocaleDateString()}</p>
                           </div>
                           <div>
                             <p className="text-sm text-gray-600 mb-1">Total Amount</p>
-                            <p className="font-semibold text-green-600">₹{order.total?.toLocaleString()}</p>
+                            <p className="font-semibold text-green-600">₹{Number(order.totalAmount ?? order.total ?? 0).toLocaleString()}</p>
                           </div>
                           <div>
                             <p className="text-sm text-gray-600 mb-1">Status</p>
@@ -251,8 +264,8 @@ export default function AccountPage() {
                           <p className="text-sm text-gray-600 mb-1">Items</p>
                           <p className="text-gray-700">
                             {Array.isArray(order.items)
-                              ? order.items.map(i => i.name || i).join(', ')
-                              : order.items}
+                              ? order.items.map(i => i.name || `Product #${i.productId || i.id}`).join(', ')
+                              : order.items || 'View order details for items'}
                           </p>
                         </div>
                         <button className="mt-3 text-green-600 hover:text-green-700 font-medium text-sm">

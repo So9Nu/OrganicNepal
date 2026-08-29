@@ -1,6 +1,6 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Leaf, Package, Truck, Shield, Star } from 'lucide-react';
-import { products, stats, testimonials } from '../../data/mockData';
 import ProductCard from '../../components/shop/ProductCard';
 import Layout from '../../components/layout/Layout';
 
@@ -30,9 +30,29 @@ const features = [
     color: 'bg-blue-100 text-blue-700',
   },
 ];
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5008/api';
 
 export default function HomePage() {
-  const featured = products.filter(p => p.featured).slice(0, 4);
+  const [products, setProducts] = useState([]);
+  const [testimonials] = useState([]);
+  useEffect(() => {
+    fetch(`${API}/products?featured=true`)
+      .then(response => response.ok ? response.json() : [])
+      .then(data => setProducts((Array.isArray(data) ? data : data.products || []).map(product => ({
+        ...product, price: Number(product.price), originalPrice: Number(product.originalPrice) || null,
+        rating: Number(product.rating) || 0, reviews: Number(product.reviews) || 0,
+        inStock: product.inStock === true || product.inStock === 1 || product.inStock === '1',
+        badges: product.badges || [],
+      }))))
+      .catch(() => setProducts([]));
+  }, []);
+  const featured = products.slice(0, 4);
+  const stats = useMemo(() => [
+    { icon: '🌿', value: products.length, label: 'Featured products' },
+    { icon: '🏡', value: new Set(products.map(product => product.farm).filter(Boolean)).size, label: 'Partner farms' },
+    { icon: '⭐', value: products.length ? (products.reduce((sum, product) => sum + product.rating, 0) / products.length).toFixed(1) : '—', label: 'Average rating' },
+    { icon: '📦', value: products.filter(product => product.inStock).length, label: 'Available now' },
+  ], [products]);
 
   return (
     <Layout>
